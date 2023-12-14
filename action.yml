@@ -2,7 +2,7 @@ name: 'Wait for Workflow Completion'
 description: 'Action to wait for the completion of a workflow'
 runs:
     using: 'node20'
-    main: 'index.js'
+    main: 'dist/index.js'
 inputs:
     GITHUB_TOKEN:
         description: 'GitHub token'
