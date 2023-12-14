@@ -1,6 +1,6 @@
 {
   "name": "wait-for-workflow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "wait for a workflow dispatch result",
   "main": "index.js",
   "scripts": {
