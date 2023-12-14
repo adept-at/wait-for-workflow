@@ -1,0 +1,15 @@
+name: 'Wait for Workflow Completion'
+description: 'Action to wait for the completion of a workflow'
+runs:
+    using: 'node20'
+    main: 'index.js'
+inputs:
+    GITHUB_TOKEN:
+        description: 'GitHub token'
+        required: true
+    REPOSITORY:
+        description: 'repository name'
+        required: true
+    WORKFLOW_NAME:
+        description: 'workflow name'
+        required: true
