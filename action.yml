@@ -13,3 +13,6 @@ inputs:
     WORKFLOW_NAME:
         description: 'workflow name'
         required: true
+    CLIENT_PAYLOAD:
+     description: 'JSON payload with extra information about the event that is dispatched: preview url, etc.'
+     required: true
