@@ -28841,7 +28841,7 @@ function run() {
         const [owner, repo] = repository.split('/');
         // Dispatch the workflow event
         yield dispatchWorkflowEvent(octokit, owner, repo, workflowName, clientPayload);
-        const MAX_ATTEMPTS = 8;
+        const MAX_ATTEMPTS = 16;
         let attempt = 0;
         const current_time = new Date();
         core.info('Current Time: ' + current_time.toISOString());
