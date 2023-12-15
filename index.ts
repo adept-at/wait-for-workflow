@@ -6,10 +6,31 @@ interface WorkflowRunStatus {
     conclusion: string | null;
 }
 
+async function dispatchWorkflowEvent(octokit: Octokit, owner: string, repo: string, eventType: string, clientPayload: string) {
+    try {
+        const payload = clientPayload ? JSON.parse(clientPayload) : {};
+        await octokit.rest.repos.createDispatchEvent({
+            owner,
+            repo,
+            event_type: eventType,
+            client_payload: payload
+        });
+        core.info(`Dispatched event '${eventType}' successfully.`);
+    } catch (error) {
+        if (error instanceof Error) {
+            core.error(`Error dispatching event: ${error.message}`);
+        } else {
+            core.error('Unknown error occurred while dispatching event');
+        }
+        throw error;
+    }
+}
+
 async function run() {
     const githubToken = core.getInput('GITHUB_TOKEN');
     const repository = core.getInput('REPOSITORY');
     const workflowName = core.getInput('WORKFLOW_NAME');
+    const clientPayload = core.getInput('CLIENT_PAYLOAD', { required: false });
 
     // Create a new Octokit instance
     const octokit = new Octokit({
@@ -18,6 +39,9 @@ async function run() {
     });
 
     const [owner, repo] = repository.split('/');
+
+    // Dispatch the workflow event
+    await dispatchWorkflowEvent(octokit, owner, repo, workflowName, clientPayload);
 
     const MAX_ATTEMPTS = 8;
     let attempt = 0;
@@ -95,7 +119,7 @@ async function run() {
 
             attempt++;
             core.info('Attempt: ' + attempt);
-            await new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
+            await new Promise((resolve) => setTimeout(resolve, 30000)); // 30 seconds
         }
 
         if (attempt === MAX_ATTEMPTS) {

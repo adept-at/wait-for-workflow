@@ -28804,17 +28804,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const rest_1 = __nccwpck_require__(4966);
 const core = __importStar(__nccwpck_require__(9791));
+function dispatchWorkflowEvent(octokit, owner, repo, eventType, clientPayload) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const payload = clientPayload ? JSON.parse(clientPayload) : {};
+            yield octokit.rest.repos.createDispatchEvent({
+                owner,
+                repo,
+                event_type: eventType,
+                client_payload: payload
+            });
+            core.info(`Dispatched event '${eventType}' successfully.`);
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.error(`Error dispatching event: ${error.message}`);
+            }
+            else {
+                core.error('Unknown error occurred while dispatching event');
+            }
+            throw error;
+        }
+    });
+}
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const githubToken = core.getInput('GITHUB_TOKEN');
         const repository = core.getInput('REPOSITORY');
         const workflowName = core.getInput('WORKFLOW_NAME');
+        const clientPayload = core.getInput('CLIENT_PAYLOAD', { required: false });
         // Create a new Octokit instance
         const octokit = new rest_1.Octokit({
             auth: githubToken,
             userAgent: 'GitHub Action',
         });
         const [owner, repo] = repository.split('/');
+        // Dispatch the workflow event
+        yield dispatchWorkflowEvent(octokit, owner, repo, workflowName, clientPayload);
         const MAX_ATTEMPTS = 8;
         let attempt = 0;
         const current_time = new Date();
@@ -28891,7 +28917,7 @@ function run() {
                     }
                     attempt++;
                     core.info('Attempt: ' + attempt);
-                    yield new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
+                    yield new Promise((resolve) => setTimeout(resolve, 30000)); // 30 seconds
                 }
                 if (attempt === MAX_ATTEMPTS) {
                     core.error('Max attempts reached without completion. Exiting.');
