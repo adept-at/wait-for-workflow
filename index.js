@@ -1,10 +1,18 @@
-const https = require('https');
+const { Octokit } = require('@octokit/rest');
 const core = require('@actions/core');
 
 async function run() {
   const githubToken = core.getInput('GITHUB_TOKEN');
   const repository = core.getInput('REPOSITORY');
   const workflowName = core.getInput('WORKFLOW_NAME');
+
+  // Create a new Octokit instance
+  const octokit = new Octokit({
+    auth: githubToken,
+    userAgent: 'GitHub Action',
+  });
+
+  const [owner, repo] = repository.split('/');
 
   const MAX_ATTEMPTS = 8;
   let attempt = 0;
@@ -13,70 +21,38 @@ async function run() {
   const thirtySecsLater = new Date(current_time.getTime() + 30000);
 
   async function checkWorkflowStatus() {
-    const options = {
-      hostname: 'api.github.com',
-      path: `/repos/${repository}/actions/runs`,
-      method: 'GET',
-      headers: {
-        Authorization: 'token ' + githubToken,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'Node.js Script',
-      },
-    };
-    core.info('Request options path: ' + JSON.stringify(options.path));
+    try {
+      const response = await octokit.actions.listWorkflowRunsForRepo({
+        owner,
+        repo,
+        event: 'repository_dispatch'
+      });
 
-    return new Promise((resolve, reject) => {
-      https
-        .get(options, (res) => {
-          let data = '';
-          res.on('data', (chunk) => {
-            data += chunk;
-          });
-          res.on('end', () => {
-            const response = JSON.parse(data);
-            if (!response.workflow_runs) {
-              core.error(
-                'Unexpected response structure: ' + JSON.stringify(response)
-              );
-              reject('Invalid API response');
-              return;
-            }
-            core.info('Response: ' + response.workflow_runs[0].status);
-            const workflowRuns = response.workflow_runs.filter(
-              (run) =>
-                new Date(run.created_at) > new Date(current_time) &&
-                new Date(run.created_at) < new Date(thirtySecsLater) &&
-                run.event === 'repository_dispatch' &&
-                run.display_title === workflowName
-            );
-            if (workflowRuns.length > 0) {
-              const status = workflowRuns[0].status;
-              const conclusion = workflowRuns[0].conclusion;
-              core.info('Status of the matching workflow run: ' + status);
+      if (!response.data.workflow_runs) {
+        core.error('No workflow runs found');
+        return { status: null, conclusion: null };
+      }
 
-              if (status === 'completed') {
-                core.info(
-                  'Completed matching workflow run: ' +
-                    status +
-                    ', ' +
-                    conclusion
-                );
-                resolve({ status, conclusion });
-              } else {
-                core.info('Workflow run is not completed yet');
-                resolve({ status, conclusion: null });
-              }
-            } else {
-              core.info('No workflow runs found');
-              reject('No workflow runs found');
-            }
-          });
-        })
-        .on('error', (e) => {
-          core.error('HTTP request failed: ' + e.message);
-          reject(e);
-        });
-    });
+      const workflowRuns = response.data.workflow_runs.filter(
+        (run) =>
+          new Date(run.created_at) > new Date(current_time) &&
+          new Date(run.created_at) < new Date(thirtySecsLater) &&
+          run.display_title === workflowName
+      );
+
+      if (workflowRuns.length > 0) {
+        const status = workflowRuns[0].status;
+        const conclusion = workflowRuns[0].conclusion;
+        core.info('Status of the matching workflow run: ' + status);
+        return { status, conclusion };
+      } else {
+        core.info('No matching workflow runs found');
+        return { status: null, conclusion: null };
+      }
+    } catch (error) {
+      core.error('Error fetching workflow runs: ' + error.message);
+      throw error;
+    }
   }
 
   async function waitForWorkflowCompletion() {
@@ -84,26 +60,24 @@ async function run() {
     while (attempt < MAX_ATTEMPTS) {
       try {
         res = await checkWorkflowStatus();
+        if (res && res.status === 'completed') {
+          if (res.conclusion === 'success') {
+            core.info('Workflow completed and test passed!');
+            break;
+          } else if (res.conclusion === 'failure') {
+            core.error('Workflow status is failed...');
+            process.exit(1);
+          }
+        } else if (res.status) {
+          core.info(
+            'Workflow status is ' + res.status + '. Waiting for completion...'
+          );
+        } else {
+          core.info('Workflow status is unknown. Waiting for completion...');
+        }
       } catch (error) {
         core.error('Error checking workflow status: ' + error.message);
-      }
-
-      if (res && res.status === 'completed' && res.conclusion === 'success') {
-        core.info('Workflow completed and test passed!');
         break;
-      } else if (
-        res &&
-        res.status === 'completed' &&
-        res.conclusion === 'failure'
-      ) {
-        core.error('Workflow status is failed...');
-        process.exit(1);
-      } else if (res?.status !== '') {
-        core.info(
-          'Workflow status is ' + res?.status + '. Waiting for completion...'
-        );
-      } else {
-        core.info('Workflow status is unknown. Waiting for completion...');
       }
 
       attempt++;

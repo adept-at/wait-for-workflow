@@ -26609,7 +26609,7 @@ async function run() {
         Authorization: 'token ' + githubToken,
         Accept: 'application/vnd.github.v3+json',
         'User-Agent': 'Node.js Script',
-      },
+      }
     };
     core.info('Request options path: ' + JSON.stringify(options.path));
 
