@@ -28764,6 +28764,156 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 4022:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const rest_1 = __nccwpck_require__(4966);
+const core = __importStar(__nccwpck_require__(9791));
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const githubToken = core.getInput('GITHUB_TOKEN');
+        const repository = core.getInput('REPOSITORY');
+        const workflowName = core.getInput('WORKFLOW_NAME');
+        // Create a new Octokit instance
+        const octokit = new rest_1.Octokit({
+            auth: githubToken,
+            userAgent: 'GitHub Action',
+        });
+        const [owner, repo] = repository.split('/');
+        const MAX_ATTEMPTS = 8;
+        let attempt = 0;
+        const current_time = new Date();
+        core.info('Current Time: ' + current_time.toISOString());
+        const thirtySecsLater = new Date(current_time.getTime() + 30000);
+        function checkWorkflowStatus() {
+            return __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const response = yield octokit.actions.listWorkflowRunsForRepo({
+                        owner,
+                        repo,
+                        event: 'repository_dispatch'
+                    });
+                    if (!response.data.workflow_runs) {
+                        core.error('No workflow runs found');
+                        return { status: null, conclusion: null };
+                    }
+                    const workflowRuns = response.data.workflow_runs.filter((run) => new Date(run.created_at) > new Date(current_time) &&
+                        new Date(run.created_at) < new Date(thirtySecsLater) &&
+                        run.display_title === workflowName);
+                    if (workflowRuns.length > 0) {
+                        const status = workflowRuns[0].status;
+                        const conclusion = workflowRuns[0].conclusion;
+                        core.info('Status of the matching workflow run: ' + status);
+                        return { status, conclusion };
+                    }
+                    else {
+                        core.info('No matching workflow runs found');
+                        return { status: null, conclusion: null };
+                    }
+                }
+                catch (error) {
+                    if (error instanceof Error) {
+                        core.error('Error fetching workflow runs: ' + error.message);
+                    }
+                    else {
+                        core.error('An unknown error occurred');
+                    }
+                    throw error;
+                }
+            });
+        }
+        function waitForWorkflowCompletion() {
+            return __awaiter(this, void 0, void 0, function* () {
+                let res = { status: null, conclusion: null };
+                while (attempt < MAX_ATTEMPTS) {
+                    try {
+                        res = yield checkWorkflowStatus();
+                        if (res && res.status === 'completed') {
+                            if (res.conclusion === 'success') {
+                                core.info('Workflow completed and test passed!');
+                                break;
+                            }
+                            else if (res.conclusion === 'failure') {
+                                core.error('Workflow status is failed...');
+                                process.exit(1);
+                            }
+                        }
+                        else if (res.status) {
+                            core.info('Workflow status is ' + res.status + '. Waiting for completion...');
+                        }
+                        else {
+                            core.info('Workflow status is unknown. Waiting for completion...');
+                        }
+                    }
+                    catch (error) {
+                        if (error instanceof Error) {
+                            core.error('Error checking workflow status: ' + error.message);
+                        }
+                        else {
+                            core.error('An unknown error occurred');
+                        }
+                        break;
+                    }
+                    attempt++;
+                    core.info('Attempt: ' + attempt);
+                    yield new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
+                }
+                if (attempt === MAX_ATTEMPTS) {
+                    core.error('Max attempts reached without completion. Exiting.');
+                    process.exit(1);
+                }
+            });
+        }
+        yield waitForWorkflowCompletion();
+    });
+}
+run().catch((error) => {
+    if (error instanceof Error) {
+        core.setFailed('Action failed with error: ' + error.message);
+    }
+    else {
+        core.setFailed('Action failed due to an unknown error');
+    }
+});
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -30645,111 +30795,12 @@ module.exports = parseParams
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-const { Octokit } = __nccwpck_require__(4966);
-const core = __nccwpck_require__(9791);
-
-async function run() {
-  const githubToken = core.getInput('GITHUB_TOKEN');
-  const repository = core.getInput('REPOSITORY');
-  const workflowName = core.getInput('WORKFLOW_NAME');
-
-  // Create a new Octokit instance
-  const octokit = new Octokit({
-    auth: githubToken,
-    userAgent: 'GitHub Action',
-  });
-
-  const [owner, repo] = repository.split('/');
-
-  const MAX_ATTEMPTS = 8;
-  let attempt = 0;
-  const current_time = new Date();
-  core.info('Current Time: ' + current_time.toISOString());
-  const thirtySecsLater = new Date(current_time.getTime() + 30000);
-
-  async function checkWorkflowStatus() {
-    try {
-      const response = await octokit.actions.listWorkflowRunsForRepo({
-        owner,
-        repo,
-        event: 'repository_dispatch'
-      });
-
-      if (!response.data.workflow_runs) {
-        core.error('No workflow runs found');
-        return { status: null, conclusion: null };
-      }
-
-      const workflowRuns = response.data.workflow_runs.filter(
-        (run) =>
-          new Date(run.created_at) > new Date(current_time) &&
-          new Date(run.created_at) < new Date(thirtySecsLater) &&
-          run.display_title === workflowName
-      );
-
-      if (workflowRuns.length > 0) {
-        const status = workflowRuns[0].status;
-        const conclusion = workflowRuns[0].conclusion;
-        core.info('Status of the matching workflow run: ' + status);
-        return { status, conclusion };
-      } else {
-        core.info('No matching workflow runs found');
-        return { status: null, conclusion: null };
-      }
-    } catch (error) {
-      core.error('Error fetching workflow runs: ' + error.message);
-      throw error;
-    }
-  }
-
-  async function waitForWorkflowCompletion() {
-    let res = {};
-    while (attempt < MAX_ATTEMPTS) {
-      try {
-        res = await checkWorkflowStatus();
-        if (res && res.status === 'completed') {
-          if (res.conclusion === 'success') {
-            core.info('Workflow completed and test passed!');
-            break;
-          } else if (res.conclusion === 'failure') {
-            core.error('Workflow status is failed...');
-            process.exit(1);
-          }
-        } else if (res.status) {
-          core.info(
-            'Workflow status is ' + res.status + '. Waiting for completion...'
-          );
-        } else {
-          core.info('Workflow status is unknown. Waiting for completion...');
-        }
-      } catch (error) {
-        core.error('Error checking workflow status: ' + error.message);
-        break;
-      }
-
-      attempt++;
-      core.info('Attempt: ' + attempt);
-      await new Promise((resolve) => setTimeout(resolve, 60000)); // 60 seconds
-    }
-
-    if (attempt === MAX_ATTEMPTS) {
-      core.error('Max attempts reached without completion. Exiting.');
-      process.exit(1);
-    }
-  }
-
-  await waitForWorkflowCompletion();
-}
-
-run().catch((error) => {
-  core.setFailed('Action failed with error: ' + error.message);
-});
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(4022);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;
