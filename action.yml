@@ -17,5 +17,5 @@ inputs:
      description: 'JSON payload for the dispatched workflow: preview url, etc. `{"preview_url": "https://vercel-preiview-example.com"}`'
      required: true
     VERIFY_JOB: 
-     description: 'Wait for dispatch to complete, on by default, set to false to skip'
+     description: 'Wait for dispatch to complete, off by default, set to true to wait for the job to complete'
      required: false
