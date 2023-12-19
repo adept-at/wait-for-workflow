@@ -36,12 +36,13 @@ jobs:
           scope: '@adept-at'
       # Dispatch and wait for the Cypress workflow to complete and report back the status
       - name: Wait for Workflow Completion
-        uses: adept-at/wait-for-workflow@v1.0.5
+        uses: adept-at/wait-for-workflow@v1.0.8
         with:
             GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
             REPOSITORY: adept-at/learn-webapp
             WORKFLOW_NAME: cypress-learn-webapp
             CLIENT_PAYLOAD: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "repo": "${{ github.repository }}", "run_id": "${{ github.run_id }}", "run_attempt": "${{ github.run_attempt }}", "target_url": "${{ github.event.deployment_status.target_url }}"}'
+            VERIFY_JOB: true // leave undefined or set false to skip waitng for dispacth job results
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 ```

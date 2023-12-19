@@ -1,5 +1,5 @@
-name: 'Wait for Workflow Completion'
-description: 'Action to wait for the completion of a workflow'
+name: 'Dispatch a workflow and wait for completion'
+description: 'Action to dispatch and wait for or skip the completion of a workflow'
 runs:
     using: 'node20'
     main: 'dist/index.js'
@@ -11,8 +11,11 @@ inputs:
         description: 'repository name'
         required: true
     WORKFLOW_NAME:
-        description: 'workflow name'
+        description: 'workflow name to dispatch'
         required: true
     CLIENT_PAYLOAD:
-     description: 'JSON payload with extra information about the event that is dispatched: preview url, etc.'
+     description: 'JSON payload for the dispatched workflow: preview url, etc. `{"preview_url": "https://vercel-preiview-example.com"}`'
      required: true
+    VERIFY_JOB: 
+     description: 'Wait for dispatch to complete, off by default, set to true to wait for the job to complete'
+     required: false
