@@ -1,5 +1,5 @@
-name: 'Wait for Workflow Completion'
-description: 'Action to wait for the completion of a workflow'
+name: 'Dispatch a workflow and wait for completion'
+description: 'Action to dispatch and wait for or skip the completion of a workflow'
 runs:
     using: 'node20'
     main: 'dist/index.js'
