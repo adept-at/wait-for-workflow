@@ -11,8 +11,11 @@ inputs:
         description: 'repository name'
         required: true
     WORKFLOW_NAME:
-        description: 'workflow name'
+        description: 'workflow name to dispatch'
         required: true
     CLIENT_PAYLOAD:
-     description: 'JSON payload with extra information about the event that is dispatched: preview url, etc.'
+     description: 'JSON payload for the dispatched workflow: preview url, etc. `{"preview_url": "https://vercel-preiview-example.com"}`'
      required: true
+    VERIFY_JOB: 
+     description: 'Wait for dispatch to complete, on by default, set to false to skip'
+     required: false
