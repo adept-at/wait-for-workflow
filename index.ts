@@ -50,7 +50,7 @@ async function checkWorkflowStatus(octokit: Octokit, owner: string, repo: string
             const status = workflowRuns[0].status;
             const conclusion = workflowRuns[0].conclusion;
             const url = workflowRuns[0].html_url; 
-            core.info(`Status of the matching workflow run: ${status} at (${url})`);
+            core.info(`Status of the matching run: ${status} at (${url})`);
             return { status, conclusion };
         } else {
             core.info('No matching workflow runs found');
