@@ -13,7 +13,7 @@ git push origin v1.0.1
 
 Go to release tab in repo and publish.
 
-Example usage in a workflow:
+Example usage in a workflow to dispatch and wait for results:
 
 
 ```
@@ -42,7 +42,27 @@ jobs:
             REPOSITORY: adept-at/learn-webapp
             WORKFLOW_NAME: cypress-learn-webapp
             CLIENT_PAYLOAD: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "repo": "${{ github.repository }}", "run_id": "${{ github.run_id }}", "run_attempt": "${{ github.run_attempt }}", "target_url": "${{ github.event.deployment_status.target_url }}"}'
-            VERIFY_JOB: true // leave undefined or set false to skip waitng for dispacth job results
+            VERIFY_JOB: true ** Only required if waiting for the wortkflow results is needed. **
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+```
+Example usage in a workflow to just dispatch a workflow:
+
+
+```
+name: deployment-invite
+
+on: [deployment_status]
+
+jobs:
+  check-deployment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.deployment_status.state == 'success' && github.event.deployment_status.environment == 'Production' }}
+    steps:
+      - name: Dispatch invite learner test in production
+        uses: adept-at/wait-for-workflow@v1.0.9
+        with:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          REPOSITORY:  adept-at/lib-wdio-8-multi-remote
+          WORKFLOW_NAME: invite_learner
 ```
