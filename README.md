@@ -2,18 +2,16 @@
 
 To update and release: 
 
-Create a new branch.
-Make edits to /index.ts, then run 'ncc build index.ts -o dist' to create /dist/index.js for
- the action file to locate and run.
+1. Create a new branch.
+2. Make edits to /index.ts, then once staged in a commit, husky will compile the /dist/index.js, then just push that commit, and merge to main, 
+3. Do a release, Example:
 
-push and merge, then do a release, Example:
+git tag -a v1.0.11 -m "change version to match package.json version"
+git push origin v1.0.11
 
-git tag -a v1.0.1 -m "change version ot match package.json"
-git push origin v1.0.1
+Go to the release tab in repo and publish by that tag ^.
 
-Go to release tab in repo and publish.
-
-Example usage in a workflow to dispatch and wait for results:
+# Example usage in a workflow to dispatch and wait for results:
 
 
 ```
@@ -46,7 +44,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 ```
-Example usage in a workflow to just dispatch a workflow:
+# Example usage in a workflow to just dispatch a remote_dispatch and not wait for results:
 
 
 ```
