@@ -28922,7 +28922,7 @@ function run() {
             yield waitForWorkflowCompletion(octokit, owner, repo, workflowName);
         }
         else {
-            core.info('VERIFY_JOB is false. Not waiting for workflow completion.');
+            core.info('VERIFY_JOB is not enabled. Not waiting for workflow completion.');
         }
     });
 }
