@@ -105,7 +105,6 @@ async function run() {
     const repository = core.getInput('REPOSITORY');
     const workflowName = core.getInput('WORKFLOW_NAME');
     const clientPayload = core.getInput('CLIENT_PAYLOAD', { required: false });
-
     const verifyJobInput = core.getInput('VERIFY_JOB');
     const verifyJob = verifyJobInput.toLowerCase() === 'true';
 
