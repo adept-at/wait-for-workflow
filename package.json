@@ -1,10 +1,10 @@
 {
   "name": "wait-for-workflow",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "wait for a workflow dispatch result",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "ncc build index.ts -o dist"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.38.1",
+    "husky": "^8.0.3",
     "typescript": "^5.3.3"
   }
 }

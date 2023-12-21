@@ -105,7 +105,6 @@ async function run() {
     const repository = core.getInput('REPOSITORY');
     const workflowName = core.getInput('WORKFLOW_NAME');
     const clientPayload = core.getInput('CLIENT_PAYLOAD', { required: false });
-
     const verifyJobInput = core.getInput('VERIFY_JOB');
     const verifyJob = verifyJobInput.toLowerCase() === 'true';
 
@@ -124,7 +123,7 @@ async function run() {
     if (verifyJob) {
         await waitForWorkflowCompletion(octokit, owner, repo, workflowName);
     } else {
-        core.info('VERIFY_JOB is false. Not waiting for workflow completion.');
+        core.info(`VERIFY_JOB is not enabled. ${workflowName} was dispatched.`);
     }
 }
 

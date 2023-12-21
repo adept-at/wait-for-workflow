@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check if index.ts has been modified
+if git diff --cached --name-only | grep -q 'index.ts$'; then
+  echo "index.ts has been modified, running compilation..."
+  npm run compile
+
+  # Check if dist/index.js was successfully created/modified
+  if [ -f "dist/index.js" ]; then
+    echo "Adding dist/index.js to the commit..."
+    git add dist/index.js
+  else
+    echo "Compilation did not create dist/index.js, please check for errors."
+    exit 1
+  fi
+else
+  echo "index.ts not modified, skipping compilation."
+fi
