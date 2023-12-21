@@ -123,7 +123,7 @@ async function run() {
     if (verifyJob) {
         await waitForWorkflowCompletion(octokit, owner, repo, workflowName);
     } else {
-        core.info(`VERIFY_JOB is not enabled. ${workflowName} was dispatched.`);
+        core.info(`VERIFY_JOB is not enabled. ${workflowName} was dispatched from ${repo}.`);
     }
 }
 
