@@ -1,7 +1,7 @@
 name: 'Dispatch a workflow and wait for completion'
 description: 'Action to dispatch and wait for or skip the completion of a workflow'
 runs:
-    using: 'node20'
+    using: 'node24'
     main: 'dist/index.js'
 inputs:
     GITHUB_TOKEN:
