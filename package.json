@@ -1,6 +1,6 @@
 {
   "name": "wait-for-workflow",
-  "version": "1.0.11",
+  "version": "1.0.13",
   "description": "wait for a workflow dispatch result",
   "main": "index.ts",
   "scripts": {
@@ -15,6 +15,7 @@
     "@octokit/rest": "^20.0.2"
   },
   "devDependencies": {
+    "@types/node": "^20.19.41",
     "@vercel/ncc": "^0.38.1",
     "husky": "^8.0.3",
     "typescript": "^5.3.3"

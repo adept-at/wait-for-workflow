@@ -19,3 +19,11 @@ inputs:
     VERIFY_JOB: 
      description: 'Wait for dispatch to complete, off by default, set to true to wait for the job to complete'
      required: false
+    MAX_ATTEMPTS:
+     description: 'Maximum number of polling attempts before giving up (only used when VERIFY_JOB is true). Defaults to 16. Effective timeout = MAX_ATTEMPTS x POLL_INTERVAL_SECONDS.'
+     required: false
+     default: '16'
+    POLL_INTERVAL_SECONDS:
+     description: 'Seconds to wait between polling attempts (only used when VERIFY_JOB is true). Defaults to 30.'
+     required: false
+     default: '30'
