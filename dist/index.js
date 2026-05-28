@@ -28865,15 +28865,17 @@ function checkWorkflowStatus(octokit, owner, repo, workflowName, current_time, t
         }
     });
 }
-function waitForWorkflowCompletion(octokit, owner, repo, workflowName) {
+function waitForWorkflowCompletion(octokit, owner, repo, workflowName, maxAttempts, pollIntervalSeconds) {
     return __awaiter(this, void 0, void 0, function* () {
-        const MAX_ATTEMPTS = 16;
         let attempt = 0;
         const current_time = new Date();
         core.info('Current Time: ' + current_time.toISOString());
         const thirtySecsLater = new Date(current_time.getTime() + 30000);
+        const pollIntervalMs = pollIntervalSeconds * 1000;
+        core.info(`Polling up to ${maxAttempts} attempt(s) every ${pollIntervalSeconds}s ` +
+            `(~${Math.round((maxAttempts * pollIntervalSeconds) / 60)} min max).`);
         let res = { status: null, conclusion: null };
-        while (attempt < MAX_ATTEMPTS) {
+        while (attempt < maxAttempts) {
             res = yield checkWorkflowStatus(octokit, owner, repo, workflowName, current_time, thirtySecsLater);
             if (res && res.status === 'completed') {
                 if (res.conclusion === 'success') {
@@ -28893,14 +28895,31 @@ function waitForWorkflowCompletion(octokit, owner, repo, workflowName) {
             }
             attempt++;
             core.info('Attempt: ' + attempt);
-            yield new Promise((resolve) => setTimeout(resolve, 30000)); // 30 seconds
+            yield new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
         }
-        if (attempt === MAX_ATTEMPTS) {
+        if (attempt === maxAttempts) {
             core.error('Max attempts reached without completion. Exiting.');
             process.exit(1);
         }
     });
 }
+// Parse a positive-integer input, falling back to a default for empty or
+// invalid values so callers can omit it and preserve historical behavior.
+function parsePositiveInt(value, fallback) {
+    if (!value) {
+        return fallback;
+    }
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        core.warning(`Invalid positive integer input "${value}"; falling back to ${fallback}.`);
+        return fallback;
+    }
+    return parsed;
+}
+// Defaults preserve the historical ~8 minute ceiling (16 attempts x 30s) so
+// existing consumers that don't set these inputs are unaffected.
+const DEFAULT_MAX_ATTEMPTS = 16;
+const DEFAULT_POLL_INTERVAL_SECONDS = 30;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const githubToken = core.getInput('GITHUB_TOKEN');
@@ -28909,6 +28928,8 @@ function run() {
         const clientPayload = core.getInput('CLIENT_PAYLOAD', { required: false });
         const verifyJobInput = core.getInput('VERIFY_JOB');
         const verifyJob = verifyJobInput.toLowerCase() === 'true';
+        const maxAttempts = parsePositiveInt(core.getInput('MAX_ATTEMPTS'), DEFAULT_MAX_ATTEMPTS);
+        const pollIntervalSeconds = parsePositiveInt(core.getInput('POLL_INTERVAL_SECONDS'), DEFAULT_POLL_INTERVAL_SECONDS);
         // Create a new Octokit instance
         const octokit = new rest_1.Octokit({
             auth: githubToken,
@@ -28919,7 +28940,7 @@ function run() {
         yield dispatchWorkflowEvent(octokit, owner, repo, workflowName, clientPayload);
         // Only wait for workflow completion if VERIFY_JOB is true
         if (verifyJob) {
-            yield waitForWorkflowCompletion(octokit, owner, repo, workflowName);
+            yield waitForWorkflowCompletion(octokit, owner, repo, workflowName, maxAttempts, pollIntervalSeconds);
         }
         else {
             core.info(`VERIFY_JOB is not enabled. ${workflowName} was dispatched from ${repo}.`);
